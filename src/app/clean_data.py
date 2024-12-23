@@ -9,16 +9,18 @@ print(df.columns)
 
 # Assign new column names based on the structure of the data
 df.columns = [
-    "Country", 
-    "Density(P/Km2)", 
-    "Abbreviation", 
-    "Agricultural Land(%)", 
-    "Land Area(Km2)", 
-    "Armed Forces size", 
-    "Birth Rate", 
-    "Calling Code", 
-    "Capital/Major City", 
-    "Co2-Emissions"
+    "Country", "Density(P/Km2)", "Abbreviation", "Agricultural Land(%)",
+    "Land Area(Km2)", "Armed Forces size", "Birth Rate", "Calling Code",
+    "Capital/Major City", "Co2-Emissions", "CPI", "CPI Change(%)", 
+    "Currency-Code", "Fertility Rate", "Forested Area(%)", "Gasoline Price", 
+    "GDP", "Gross primary education enrollment(%)", 
+    "Gross tertiary education enrollment(%)", "Infant mortality", 
+    "Largest city", "Life expectancy", "Maternal mortality ratio", 
+    "Minimum wage", "Official language", "Out of pocket health expenditure", 
+    "Physicians per thousand", "Population", 
+    "Population: Labor force participation(%)", "Tax revenue(%)", 
+    "Total tax rate", "Unemployment rate", "Urban population", 
+    "Latitude", "Longitude"
 ]
 
 # If there are extra columns beyond the ones we want, we can drop them
@@ -29,12 +31,16 @@ df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
 
 # Convert numeric columns to proper types, handling any conversion errors (non-numeric data will be turned into NaN)
 numeric_columns = [
-    "Density(P/Km2)", 
-    "Agricultural Land(%)", 
-    "Land Area(Km2)", 
-    "Armed Forces size", 
-    "Birth Rate", 
-    "Co2-Emissions"
+    "Density(P/Km2)", "Agricultural Land(%)", "Land Area(Km2)", 
+    "Armed Forces size", "Birth Rate", "Co2-Emissions", "CPI", 
+    "CPI Change(%)", "Fertility Rate", "Forested Area(%)", 
+    "Gasoline Price", "GDP", "Gross primary education enrollment(%)", 
+    "Gross tertiary education enrollment(%)", "Infant mortality", 
+    "Life expectancy", "Maternal mortality ratio", "Minimum wage", 
+    "Out of pocket health expenditure", "Physicians per thousand", 
+    "Population", "Population: Labor force participation(%)", 
+    "Tax revenue(%)", "Total tax rate", "Unemployment rate", 
+    "Urban population", "Latitude", "Longitude"
 ]
 
 for col in numeric_columns:
