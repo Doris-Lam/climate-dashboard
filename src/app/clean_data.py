@@ -1,56 +1,50 @@
 import pandas as pd
 
 # Load the data from your CSV file
-# Replace 'your_data.csv' with the actual file path
-df = pd.read_csv('world-data-2023.csv', header=None)
+file_path = '/Users/dorislam/climate-dashboard/world-data-2023.csv'
+df = pd.read_csv(file_path, header=None)
 
-# Print out the current column names to see what you have
+# Print actual columns to debug
+print("Actual columns in the DataFrame:")
 print(df.columns)
 
-# Assign new column names based on the structure of the data
+# Set column headers
 df.columns = [
-    "Country", "Density(P/Km2)", "Abbreviation", "Agricultural Land(%)",
-    "Land Area(Km2)", "Armed Forces size", "Birth Rate", "Calling Code",
-    "Capital/Major City", "Co2-Emissions", "CPI", "CPI Change(%)", 
-    "Currency-Code", "Fertility Rate", "Forested Area(%)", "Gasoline Price", 
-    "GDP", "Gross primary education enrollment(%)", 
-    "Gross tertiary education enrollment(%)", "Infant mortality", 
-    "Largest city", "Life expectancy", "Maternal mortality ratio", 
-    "Minimum wage", "Official language", "Out of pocket health expenditure", 
-    "Physicians per thousand", "Population", 
-    "Population: Labor force participation(%)", "Tax revenue(%)", 
-    "Total tax rate", "Unemployment rate", "Urban population", 
-    "Latitude", "Longitude"
+    "Country", "Density(P/Km2)", "Abbreviation", "Agricultural Land(%)", "Land Area(Km2)", 
+    "Armed Forces size", "Birth Rate", "Calling Code", "Capital/Major City", "Co2-Emissions", 
+    "CPI", "CPI Change (%)", "Currency-Code", "Fertility Rate", "Forested Area (%)", 
+    "Gasoline Price", "GDP", "Gross primary education enrollment (%)", 
+    "Gross tertiary education enrollment (%)", "Infant mortality", "Largest city", 
+    "Life expectancy", "Maternal mortality ratio", "Minimum wage", "Official language", 
+    "Out of pocket health expenditure", "Physicians per thousand", "Population", 
+    "Population: Labor force participation (%)", "Tax revenue (%)", "Total tax rate", 
+    "Unemployment rate", "Urban_population", "Latitude", "Longitude"
 ]
 
-# If there are extra columns beyond the ones we want, we can drop them
-df = df.iloc[:, :10]  # Keep only the first 10 columns (adjust if needed)
-
-# Clean up any unwanted characters or unwanted whitespace in columns
+# Clean up any unwanted characters or whitespace in columns
 df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
 
-# Convert numeric columns to proper types, handling any conversion errors (non-numeric data will be turned into NaN)
+# Convert numeric columns to proper types, handling missing columns gracefully
 numeric_columns = [
-    "Density(P/Km2)", "Agricultural Land(%)", "Land Area(Km2)", 
-    "Armed Forces size", "Birth Rate", "Co2-Emissions", "CPI", 
-    "CPI Change(%)", "Fertility Rate", "Forested Area(%)", 
-    "Gasoline Price", "GDP", "Gross primary education enrollment(%)", 
-    "Gross tertiary education enrollment(%)", "Infant mortality", 
-    "Life expectancy", "Maternal mortality ratio", "Minimum wage", 
-    "Out of pocket health expenditure", "Physicians per thousand", 
-    "Population", "Population: Labor force participation(%)", 
-    "Tax revenue(%)", "Total tax rate", "Unemployment rate", 
-    "Urban population", "Latitude", "Longitude"
+    "Population", "GDP", "Urban_population", "Density(P/Km2)", "CPI", 
+    "Birth Rate", "Co2-Emissions", "CPI Change (%)", "Fertility Rate", "Gasoline Price", 
+    "Life expectancy", "Maternal mortality ratio", "Out of pocket health expenditure", 
+    "Physicians per thousand", "Tax revenue (%)", "Total tax rate", "Unemployment rate"
 ]
 
 for col in numeric_columns:
-    df[col] = pd.to_numeric(df[col], errors='coerce')
+    if col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+    else:
+        print(f"Warning: Column '{col}' not found in DataFrame.")
 
-# Drop rows with NaN values after conversion (optional)
-df = df.dropna()
+# Drop columns that have all NaN values
+df = df.dropna(axis=1, how='all')
 
-# Optional: Save the cleaned data back to a new CSV file
-df.to_csv('cleaned_data.csv', index=False)
+# Save the cleaned data to a new CSV file
+output_file = '/Users/dorislam/climate-dashboard/src/app/cleaned_data.csv'
+df.to_csv(output_file, index=False)
 
-# Display the cleaned dataframe
-print(df.head())  # Print first 5 rows to check your data
+# Display first few rows of the cleaned DataFrame
+print("Cleaned DataFrame:")
+print(df.head())
