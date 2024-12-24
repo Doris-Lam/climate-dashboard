@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, Title, Tooltip, Legend, PointElement } from 'chart.js';
-import Papa from 'papaparse'; // Add PapaParse to parse CSV
-import styles from '../../styles/Home.module.css'; 
+import * as XLSX from 'xlsx'; // Import xlsx to parse Excel data
+import styles from '../../styles/Home.module.css';
 
 // Register Chart.js components
 ChartJS.register(LineElement, CategoryScale, LinearScale, Title, Tooltip, Legend, PointElement);
@@ -12,16 +12,33 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, Title, Tooltip, Legend
 const Home = () => {
   const [climateData, setClimateData] = useState<any[]>([]);
   const [selectedDataType, setSelectedDataType] = useState<string>('Density'); // Default to 'Density'
-  
-  // Fetch and parse data
+  const [dropdownOptions, setDropdownOptions] = useState<string[]>([]); // Store dynamic dropdown options
+
+  // Fetch and parse cleaned Excel data
   useEffect(() => {
-    axios.get('/api/worlddata', { responseType: 'text' }) // Ensure response is treated as text
+    axios.get('/cleaned_world_data.xlsx', { responseType: 'arraybuffer' }) // Fetch the Excel file as arraybuffer
       .then((response) => {
-        const parsedData = Papa.parse(response.data, {
-          header: true, // Ensures the first row is used as headers
-          skipEmptyLines: true,
+        const data = new Uint8Array(response.data);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0]; // Assuming the first sheet is the one you need
+        const sheet = workbook.Sheets[sheetName];
+
+        // Parse the sheet into JSON format
+        const parsedData = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // header: 1 for the first row as headers
+        const header = parsedData[0]; // Get the headers
+        const dataRows = parsedData.slice(1); // Get the actual data
+
+        // Map the data into an object array
+        const formattedData = dataRows.map((row: any) => {
+          const rowObject: { [key: string]: any } = {};
+          row.forEach((value: any, index: number) => {
+            rowObject[header[index]] = value;
+          });
+          return rowObject;
         });
-        setClimateData(parsedData.data);
+
+        setClimateData(formattedData);
+        setDropdownOptions(header.filter((h: string) => h !== 'Country')); // Exclude 'Country' from dropdown
       })
       .catch((error) => console.error('Error fetching data:', error));
   }, []);
@@ -31,16 +48,24 @@ const Home = () => {
     setSelectedDataType(event.target.value);
   };
 
-  // Extract the data for the selected type
+  // Extract and clean the data for the selected type
   const countries = climateData.map((data) => data.Country); // Countries as x-axis labels
   const dataTypes = climateData.map((data) => parseFloat(data[selectedDataType])); // Ensure data is parsed as numbers
 
-  // Prepare chart data dynamically based on selected data type
+  // Filter out invalid data (e.g., NaN or undefined) for the selected data type
+  const validData = countries
+    .map((country, index) => ({
+      country,
+      value: dataTypes[index],
+    }))
+    .filter((item) => !isNaN(item.value) && item.value !== null);
+
+  // Prepare chart data dynamically based on the selected data type
   const chartData = {
-    labels: countries, // Countries as labels for the x-axis
+    labels: validData.map((item) => item.country), // Use valid countries for the x-axis
     datasets: [{
       label: selectedDataType, // Dynamic label based on selected data type
-      data: dataTypes, // Dynamic y-values based on selected data
+      data: validData.map((item) => item.value), // Dynamic y-values based on valid data
       borderColor: 'rgba(75, 192, 192, 1)',
       fill: false,
     }],
@@ -57,9 +82,10 @@ const Home = () => {
     scales: {
       x: {
         ticks: {
-          autoSkip: false, // Ensures no labels are skipped
-          maxRotation: 90, // Rotates the labels to fit more
-          minRotation: 90,
+          autoSkip: true, // Automatically skip labels if necessary
+          maxTicksLimit: 15, // Limit the number of x-axis labels displayed
+          maxRotation: 90,
+          minRotation: 45,
         },
       },
       y: {
@@ -74,12 +100,11 @@ const Home = () => {
 
       {/* Dropdown to select data type */}
       <select value={selectedDataType} onChange={handleDataTypeChange}>
-        <option value="Density">Population Density</option>
-        <option value="Agricultural Land">Agricultural Land (%)</option>
-        <option value="Land Area">Land Area (Km²)</option>
-        <option value="Armed Forces size">Armed Forces Size</option>
-        <option value="Birth Rate">Birth Rate</option>
-        <option value="Co2-Emissions">CO2 Emissions (tons)</option>
+        {dropdownOptions.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
       </select>
 
       {/* Display the chart */}
